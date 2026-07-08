@@ -10,11 +10,7 @@ A simple full-stack blog application.
 
 ```
 BlogApplication/
-├── backend/
-│   ├── db/
-│   │   ├── schema.sql       # table definitions
-│   │   ├── seed.sql         # seeds admin + user + sample blogs
-│   │   └── seed.js          # runs schema.sql + seed.sql against the DB
+├── backend/ 
 │   └── src/
 │       ├── config/          # db pool, session config
 │       ├── routes/          # Express routers
@@ -56,12 +52,6 @@ Create the database (name should match `PGDATABASE` in your `.env`):
 
 ```bash
 createdb blog_application
-```
-
-Initialize the schema and seed data (creates the two required users + a couple of sample blogs):
-
-```bash
-npm run seed
 ```
 
 Start the backend:

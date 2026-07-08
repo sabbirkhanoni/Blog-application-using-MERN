@@ -21,9 +21,13 @@ A full-stack blog application with session-based authentication, role-based acce
 
 ```
 BlogApplication/
+<<<<<<< HEAD
 ├── backend/
 │   ├── .env.example
 │   ├── package.json
+=======
+├── backend/ 
+>>>>>>> 3dc031f4eb2ffd5e82ad1c38361a423bf9908234
 │   └── src/
 │       ├── app.js
 │       ├── server.js
@@ -75,7 +79,34 @@ Update `backend/.env` with your local PostgreSQL credentials and server settings
 ### 3. Frontend setup
 
 ```bash
+<<<<<<< HEAD
 cd ../frontend
+=======
+createdb blog_application
+```
+
+Start the backend:
+
+```bash
+npm run dev     # with nodemon
+# or
+npm start
+```
+
+The API runs at `http://localhost:5000` by default (see `PORT` in `.env`).
+
+### Seeded accounts
+
+| Role  | Email            | Password |
+|-------|------------------|----------|
+| Admin | admin@blog.com   | 123456   |
+| User  | user@blog.com    | 123456   |
+
+## Frontend Setup
+
+```bash
+cd frontend
+>>>>>>> 3dc031f4eb2ffd5e82ad1c38361a423bf9908234
 npm install
 copy .env.example .env
 ```

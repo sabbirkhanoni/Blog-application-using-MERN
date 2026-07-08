@@ -1,7 +1,3 @@
-/**
- * Blog Service (frontend)
- * Wraps API calls related to blogs (public, user, and admin actions).
- */
 import api from '../../services/api';
 import type { Blog } from '../../utils/types';
 

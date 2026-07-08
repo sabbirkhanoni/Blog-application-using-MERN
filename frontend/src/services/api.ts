@@ -1,8 +1,3 @@
-/**
- * Shared Axios instance.
- * `withCredentials: true` is required so the express-session cookie
- * is sent with every request (session-based auth, no JWT).
- */
 import axios from 'axios';
 
 const api = axios.create({

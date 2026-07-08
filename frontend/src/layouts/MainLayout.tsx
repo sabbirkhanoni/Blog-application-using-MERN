@@ -1,7 +1,3 @@
-/**
- * MainLayout
- * Common page shell: Navbar at the top, page content below.
- */
 import { Outlet } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 

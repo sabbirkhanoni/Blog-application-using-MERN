@@ -43,7 +43,6 @@ export default function AdminDashboard() {
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Pending Blogs</h1>
 
       {isLoading && <p className="text-gray-500">Loading...</p>}
-      {error && <p className="text-red-600">{error}</p>}
       {!isLoading && !error && blogs.length === 0 && (
         <p className="text-gray-500">No pending blogs to review.</p>
       )}

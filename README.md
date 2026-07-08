@@ -1,122 +1,431 @@
 # BlogApplication
 
-A simple full-stack blog application.
+A full-stack blog application with session-based authentication, role-based access control, and a PostgreSQL backend.
 
-- **Frontend:** React.js + TypeScript + Vite, feature-based architecture, React Router DOM, Axios, Tailwind CSS
-- **Backend:** Node.js + Express.js, clean layered architecture (Route → Validation → Controller → Service → Repository → Database), PostgreSQL via the raw `pg` package (no ORM)
-- **Auth:** express-session (no JWT), plain-text password comparison (no hashing), stored in the session
+## Tech Stack
+
+- Frontend: React 19, TypeScript, Vite, React Router DOM, Axios
+- Backend: Node.js, Express.js, PostgreSQL, express-session
+- Styling: Tailwind CSS
+- Data access: raw SQL with `pg` (no ORM)
+
+## Features
+
+- User login/logout with session cookies
+- Public blog listing for approved posts only
+- Authenticated users can create, edit, delete, and view their own blogs
+- Admin can review pending blogs and approve/reject them
+- Session restoration on page refresh through `GET /me`
 
 ## Project Structure
 
 ```
 BlogApplication/
 ├── backend/
-│   ├── db/
-│   │   ├── schema.sql       # table definitions
-│   │   ├── seed.sql         # seeds admin + user + sample blogs
-│   │   └── seed.js          # runs schema.sql + seed.sql against the DB
+│   ├── .env.example
+│   ├── package.json
 │   └── src/
-│       ├── config/          # db pool, session config
-│       ├── routes/          # Express routers
-│       ├── controllers/     # request/response only
-│       ├── services/        # business logic
-│       ├── repositories/    # raw SQL queries
-│       ├── validators/      # request validation
-│       ├── middlewares/     # auth.middleware.js, admin.middleware.js
 │       ├── app.js
-│       └── server.js
+│       ├── server.js
+│       ├── config/
+│       ├── controllers/
+│       ├── middlewares/
+│       ├── repositories/
+│       ├── routes/
+│       ├── services/
+│       └── validators/
 └── frontend/
+    ├── .env.example
+    ├── package.json
     └── src/
-        ├── app/              # App.tsx (routes)
-        ├── components/       # Navbar, ProtectedRoute, AdminRoute, StatusBadge
+        ├── app/
+        ├── components/
         ├── features/
-        │   ├── auth/         # AuthContext, LoginForm, auth.service.ts
-        │   └── blog/         # BlogCard, BlogForm, blog.service.ts
-        ├── layouts/          # MainLayout
-        ├── pages/            # Home, Login, UserDashboard, MyBlogs, CreateBlog, EditBlog, AdminDashboard, NotFound
-        ├── services/         # api.ts (shared Axios instance)
-        └── utils/            # types.ts
+        ├── layouts/
+        ├── pages/
+        ├── services/
+        └── utils/
 ```
 
 ## Prerequisites
 
-- Node.js 18+
-- PostgreSQL running locally (or accessible via connection settings)
+- Node.js 18 or newer
+- PostgreSQL 14 or newer
+- npm
 
-## Backend Setup
+## Installation Guide
+
+### 1. Clone the project
+
+```bash
+git clone <your-repo-url>
+cd BlogApplication
+```
+
+### 2. Backend setup
 
 ```bash
 cd backend
 npm install
-cp .env.example .env
-# edit .env with your PostgreSQL credentials
+copy .env.example .env
 ```
 
-Create the database (name should match `PGDATABASE` in your `.env`):
+Update `backend/.env` with your local PostgreSQL credentials and server settings.
+
+### 3. Frontend setup
 
 ```bash
-createdb blog_application
-```
-
-Initialize the schema and seed data (creates the two required users + a couple of sample blogs):
-
-```bash
-npm run seed
-```
-
-Start the backend:
-
-```bash
-npm run dev     # with nodemon
-# or
-npm start
-```
-
-The API runs at `http://localhost:5000` by default (see `PORT` in `.env`).
-
-### Seeded accounts
-
-| Role  | Email            | Password |
-|-------|------------------|----------|
-| Admin | admin@blog.com   | 123456   |
-| User  | user@blog.com    | 123456   |
-
-## Frontend Setup
-
-```bash
-cd frontend
+cd ../frontend
 npm install
-cp .env.example .env
-# VITE_API_URL should point to the backend, e.g. http://localhost:5000
+copy .env.example .env
+```
+
+Set `VITE_API_URL` to your backend URL, usually `http://localhost:5000`.
+
+### 4. Start both apps
+
+Backend:
+
+```bash
+cd backend
 npm run dev
 ```
 
-The frontend runs at `http://localhost:5173` by default.
+Frontend:
 
-## API Endpoints
+```bash
+cd frontend
+npm run dev
+```
+
+### 5. Initialize the database
+
+If you have not created the tables yet, run the SQL below in your PostgreSQL database.
+
+```sql
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL UNIQUE,
+    password TEXT NOT NULL,
+    role TEXT NOT NULL CHECK (role IN ('user', 'admin')),
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE blogs (
+    id SERIAL PRIMARY KEY,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('Pending', 'Approved', 'Rejected')) DEFAULT 'Pending',
+    author_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+```
+
+## Environment Variables
+
+### Backend `.env`
+
+| Variable | Example | Description |
+| --- | --- | --- |
+| `PORT` | `5000` | Express server port |
+| `PGHOST` | `localhost` | PostgreSQL host |
+| `PGPORT` | `5432` | PostgreSQL port |
+| `PGUSER` | `postgres` | PostgreSQL username |
+| `PGPASSWORD` | `postgres` | PostgreSQL password |
+| `PGDATABASE` | `blog_applicationDB` | PostgreSQL database name |
+| `SESSION_SECRET` | `change-this-secret-in-production` | Secret used to sign session cookies |
+| `CLIENT_ORIGIN` | `http://localhost:5173` | Allowed frontend origin for CORS |
+
+### Frontend `.env`
+
+| Variable | Example | Description |
+| --- | --- | --- |
+| `VITE_API_URL` | `http://localhost:5000` | Base URL for backend API requests |
+
+## Database Schema
+
+The backend repositories expect two tables: `users` and `blogs`.
+
+### `users`
+
+| Column | Type | Notes |
+| --- | --- | --- |
+| `id` | integer | Primary key |
+| `name` | text | User display name |
+| `email` | text | Unique login identifier |
+| `password` | text | Stored as plain text in this project |
+| `role` | text | `admin` or `user` |
+| `created_at` | timestamp | Creation time |
+
+### `blogs`
+
+| Column | Type | Notes |
+| --- | --- | --- |
+| `id` | integer | Primary key |
+| `title` | text | Blog title |
+| `content` | text | Blog body |
+| `status` | text | `Pending`, `Approved`, or `Rejected` |
+| `author_id` | integer | Foreign key to `users.id` |
+| `created_at` | timestamp | Creation time |
+| `updated_at` | timestamp | Last update time |
+
+### Relationships
+
+- One user can have many blogs.
+- Approved blogs are public.
+- Pending blogs are visible to admins only.
+
+### Manual Seed Data
+
+Use the following inserts if you want quick local test accounts.
+
+```sql
+INSERT INTO users (name, email, password, role)
+VALUES
+    ('Admin', 'admin@blog.com', '123456', 'admin'),
+    ('User', 'user@blog.com', '123456', 'user');
+```
+
+## API Documentation
+
+Base URL: `http://localhost:5000`
 
 ### Auth
-- `POST /auth/login` — body: `{ email, password }`
-- `POST /auth/logout`
 
-### Blog (user)
-- `GET /blogs` — public, returns only approved blogs
-- `GET /blogs/my` — auth required, returns the logged-in user's blogs (any status)
-- `POST /blogs` — auth required, body: `{ title, content }`, status starts as `Pending`
-- `PUT /blogs/:id` — auth required, owner only, resets status to `Pending`
-- `DELETE /blogs/:id` — auth required, owner only
+#### `POST /auth/login`
 
-### Admin
-- `GET /admin/blogs/pending` — admin only
-- `PATCH /admin/blogs/:id/approve` — admin only
-- `PATCH /admin/blogs/:id/reject` — admin only
+Request body:
+
+```json
+{
+    "email": "admin@blog.com",
+    "password": "123456"
+}
+```
+
+Success response:
+
+```json
+{
+    "success": true,
+    "error": false,
+    "message": "Login successful",
+    "user": {
+        "id": 1,
+        "name": "Admin",
+        "email": "admin@blog.com",
+        "role": "admin"
+    }
+}
+```
+
+#### `POST /auth/logout`
+
+Destroys the current session.
 
 ### Session
-- `GET /me` — returns the currently logged-in user (used by the frontend to restore session state on refresh)
 
-## Notes
+#### `GET /me`
 
-- Passwords are stored and compared as plain text, per project requirements (no hashing).
-- Authentication uses `express-session` only — no JWTs.
-- Only two middlewares are used: `auth.middleware.js` (requires login) and `admin.middleware.js` (requires admin role).
-- No models folder — PostgreSQL is accessed via raw SQL in the repository layer using the `pg` package.
+Returns the currently logged-in user from the session cookie.
+
+Success response:
+
+```json
+{
+    "success": true,
+    "error": false,
+    "user": {
+        "id": 1,
+        "name": "Admin",
+        "email": "admin@blog.com",
+        "role": "admin"
+    }
+}
+```
+
+Unauthorized response:
+
+```json
+{
+    "success": false,
+    "error": true,
+    "message": "Not authenticated"
+}
+```
+
+### Blogs
+
+#### `GET /blogs`
+
+Public endpoint. Returns only approved blogs.
+
+Success response:
+
+```json
+{
+    "success": true,
+    "blogs": [
+        {
+            "id": 1,
+            "title": "First Post",
+            "content": "Hello world",
+            "status": "Approved",
+            "author_id": 2,
+            "created_at": "2026-07-08T10:00:00.000Z",
+            "updated_at": "2026-07-08T10:00:00.000Z",
+            "author_name": "User"
+        }
+    ]
+}
+```
+
+#### `GET /blogs/my`
+
+Auth required. Returns all blogs for the logged-in user.
+
+#### `POST /blogs`
+
+Auth required. Creates a new blog.
+
+Request body:
+
+```json
+{
+    "title": "My new post",
+    "content": "Blog content"
+}
+```
+
+#### `PUT /blogs/:id`
+
+Auth required. Owner only. Updates a blog and resets status to `Pending`.
+
+#### `DELETE /blogs/:id`
+
+Auth required. Owner only. Deletes a blog.
+
+### Admin
+
+#### `GET /admin/blogs/pending`
+
+Admin only. Returns all pending blogs.
+
+Success response:
+
+```json
+{
+    "success": true,
+    "error": false,
+    "blogs": []
+}
+```
+
+#### `PATCH /admin/blogs/:id/approve`
+
+Admin only. Approves a pending blog.
+
+#### `PATCH /admin/blogs/:id/reject`
+
+Admin only. Rejects a pending blog.
+
+## Response Format
+
+The API generally returns JSON in these shapes:
+
+Success:
+
+```json
+{
+    "success": true,
+    "error": false,
+    "message": "Optional message",
+    "user": {},
+    "blog": {},
+    "blogs": []
+}
+```
+
+Error:
+
+```json
+{
+    "success": false,
+    "error": true,
+    "message": "Something went wrong"
+}
+```
+
+Validation errors:
+
+```json
+{
+    "success": false,
+    "error": true,
+    "errors": ["Title is required", "Content is required"]
+}
+```
+
+## Postman Test Guide
+
+### 1. Login
+
+- Method: `POST`
+- URL: `http://localhost:5000/auth/login`
+- Body: raw JSON with `email` and `password`
+- Expected: session cookie is set in the response
+
+### 2. Restore session
+
+- Method: `GET`
+- URL: `http://localhost:5000/me`
+- Expected: logged-in user object if the cookie is present
+
+### 3. Fetch public blogs
+
+- Method: `GET`
+- URL: `http://localhost:5000/blogs`
+- Expected: only approved blogs
+
+### 4. Fetch my blogs
+
+- Method: `GET`
+- URL: `http://localhost:5000/blogs/my`
+- Expected: all blogs owned by the logged-in user
+
+### 5. Create blog
+
+- Method: `POST`
+- URL: `http://localhost:5000/blogs`
+- Body: `{ "title": "Test", "content": "Test content" }`
+- Expected: new blog with `Pending` status
+
+### 6. Admin review
+
+- Method: `GET`
+- URL: `http://localhost:5000/admin/blogs/pending`
+- Expected: pending blog list for admin only
+
+- Method: `PATCH`
+- URL: `http://localhost:5000/admin/blogs/:id/approve`
+- Expected: blog status becomes `Approved`
+
+- Method: `PATCH`
+- URL: `http://localhost:5000/admin/blogs/:id/reject`
+- Expected: blog status becomes `Rejected`
+
+## Seeded Accounts
+
+| Role | Email | Password |
+| --- | --- | --- |
+| Admin | `admin@blog.com` | `123456` |
+| User | `user@blog.com` | `123456` |
+
+## Important Notes
+
+- Authentication is session-based using `express-session`; there is no JWT.
+- Passwords are stored and compared as plain text in this project.
+- `withCredentials: true` is required on the frontend Axios instance so the session cookie is sent.
+- Admin can only approve/reject pending blogs; create/edit/delete are user actions.

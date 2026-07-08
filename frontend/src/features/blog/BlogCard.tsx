@@ -1,8 +1,3 @@
-/**
- * BlogCard
- * Displays a single blog's title, content preview, and status.
- * Optional action buttons (edit/delete/approve/reject) are passed in as children.
- */
 import type { Blog } from '../../utils/types';
 import StatusBadge from '../../components/StatusBadge';
 

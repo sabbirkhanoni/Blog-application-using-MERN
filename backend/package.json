@@ -1,0 +1,22 @@
+{
+  "name": "blog-application-backend",
+  "version": "1.0.0",
+  "description": "Simple Blog Application backend - Node.js, Express.js, PostgreSQL (raw SQL via pg), express-session auth",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "seed": "node db/seed.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-session": "^1.18.0",
+    "pg": "^8.11.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}

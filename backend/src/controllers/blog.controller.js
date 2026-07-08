@@ -1,4 +1,4 @@
-import { getApprovedBlogsService, getMyBlogsService, createBlogService } from '../services/blog.service.js';
+import { getApprovedBlogsService, getMyBlogsService, createBlogService, updateBlogService, deleteBlogService } from '../services/blog.service.js';
 
  //GET /blogs
  //Public endpoint - returns only approved blogs. No auth required.
@@ -77,13 +77,6 @@ async function updateBlogController(req, res) {
       blog
     });
   } catch (err) {
-    if (err instanceof blogService.BlogError) {
-      return res.status(err.statusCode).json({
-        success: false,
-        error: true,
-        message: err.message
-      });
-    }
     console.error('Update blog error:', err);
     return res.status(500).json({
       success: false,
@@ -102,7 +95,10 @@ async function deleteBlogController(req, res) {
     const userId = req.session.user.id;
 
     await deleteBlogService({ blogId, userId });
-    return res.status(200).json({ success: true, error: false, message: 'Blog deleted successfully' });
+    return res.status(200).json({
+      success: true,
+      error: false,
+      message: 'Blog deleted successfully' });
   } catch (err) {
     console.error('Delete blog error:', err);
     return res.status(500).json({

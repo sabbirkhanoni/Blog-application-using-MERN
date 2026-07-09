@@ -1,17 +1,11 @@
-/**
- * PostgreSQL connection pool.
- * All repositories import `pool` from here to run raw SQL queries.
- */
 import dotenv from "dotenv";
 dotenv.config();
 import { Pool } from "pg";
 
 const pool = new Pool({
-  host: process.env.PGHOST,
-  port: process.env.PGPORT,
-  user: process.env.PGUSER,
-  password: process.env.PGPASSWORD,
-  database: process.env.PGDATABASE,
+  connectionString: process.env.DATABASE_URL,
+  ssl:
+    process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
 });
 
 pool.on("error", (err) => {
